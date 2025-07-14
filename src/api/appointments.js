@@ -5,7 +5,7 @@ import axios from 'axios';
 const API_BASE = 'http://localhost:8000/api/appointments';
 
 // Set up axios instance with JWT token if available
-default export function getAuthAxios(token) {
+export function getAuthAxios(token) {
   return axios.create({
     baseURL: API_BASE,
     headers: token ? { Authorization: `Bearer ${token}` } : {},

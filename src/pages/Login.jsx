@@ -1,17 +1,23 @@
-import React, { useState, useContext } from 'react';
-import { AuthContext } from '../components/AuthProvider';
+import React, { useState } from 'react';
+import { useAuth } from '../components/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useContext(AuthContext);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     const success = await login(email, password);
-    if (!success) setError('Invalid credentials');
+    if (success) {
+      navigate('/appointments');
+    } else {
+      setError('Invalid credentials');
+    }
   };
 
   return (

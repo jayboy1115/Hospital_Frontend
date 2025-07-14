@@ -1,46 +1,58 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { loginUser, registerUser } from '../api/auth';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { login, register, getUser } from '../api/auth';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setUser({ token });
+    if (token && !user) {
+      getUser(token).then(setUser).catch(() => setUser(null));
     }
-  }, []);
+  }, [token, user]);
 
-  const login = async (email, password) => {
-    const data = await loginUser(email, password);
-    if (data && data.token) {
-      localStorage.setItem('token', data.token);
-      setUser({ token: data.token });
-      return true;
-    }
+  const handleLogin = async (email, password) => {
+    try {
+      const data = await login(email, password);
+      if (data && data.access) {
+        setToken(data.access);
+        localStorage.setItem('token', data.access);
+        const userData = await getUser(data.access);
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        return true;
+      }
+    } catch (e) {}
     return false;
   };
 
-  const register = async (email, password) => {
-    const data = await registerUser(email, password);
-    if (data && data.token) {
-      localStorage.setItem('token', data.token);
-      setUser({ token: data.token });
-      return true;
-    }
+  const handleRegister = async (formData) => {
+    try {
+      const data = await register(formData);
+      if (data && data.user) {
+        // Optionally auto-login after register
+        return await handleLogin(formData.get('email'), formData.get('password'));
+      }
+    } catch (e) {}
     return false;
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    setToken(null);
     setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ token, user, login: handleLogin, register: handleRegister, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}

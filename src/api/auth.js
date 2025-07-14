@@ -1,21 +1,22 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_BASE = 'http://localhost:8000/api/authentication';
 
-export const loginUser = async (email, password) => {
-  try {
-    const response = await axios.post(`${API_URL}/auth/login/`, { email, password });
-    return response.data;
-  } catch (error) {
-    return null;
-  }
-};
+export async function login(email, password) {
+  const res = await axios.post(`${API_BASE}/login/`, { email, password });
+  return res.data;
+}
 
-export const registerUser = async (email, password) => {
-  try {
-    const response = await axios.post(`${API_URL}/auth/register/`, { email, password });
-    return response.data;
-  } catch (error) {
-    return null;
-  }
-};
+export async function register(data) {
+  const res = await axios.post(`${API_BASE}/register/`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+}
+
+export async function getUser(token) {
+  const res = await axios.get(`${API_BASE}/user/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
