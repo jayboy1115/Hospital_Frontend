@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './components/AuthProvider';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Appointments from './pages/Appointments';
+import Profile from './pages/Profile';
+import Chatbot from './pages/Chatbot';
 import './App.css';
 
 function PrivateRoute({ children }) {
@@ -21,6 +23,16 @@ function App() {
           <Route path="/appointments" element={
             <PrivateRoute>
               <Appointments />
+            </PrivateRoute>
+          } />
+          <Route path="/profile" element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          } />
+          <Route path="/chatbot" element={
+            <PrivateRoute>
+              <Chatbot />
             </PrivateRoute>
           } />
           <Route path="*" element={<Navigate to="/appointments" />} />

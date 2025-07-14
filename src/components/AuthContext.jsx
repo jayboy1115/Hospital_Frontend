@@ -1,5 +1,6 @@
 // src/components/AuthContext.jsx
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { login, register, getUser } from '../api/auth';
 
 const AuthContext = createContext();
 
@@ -7,11 +8,36 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
 
-  const login = (token, user) => {
-    setToken(token);
-    setUser(user);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+  useEffect(() => {
+    if (token && !user) {
+      getUser(token).then(setUser).catch(() => setUser(null));
+    }
+  }, [token, user]);
+
+  const handleLogin = async (email, password) => {
+    try {
+      const data = await login(email, password);
+      if (data && data.access) {
+        setToken(data.access);
+        localStorage.setItem('token', data.access);
+        const userData = await getUser(data.access);
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  };
+
+  const handleRegister = async (formData) => {
+    try {
+      const data = await register(formData);
+      if (data && data.user) {
+        // Optionally auto-login after register
+        return await handleLogin(formData.get('email'), formData.get('password'));
+      }
+    } catch (e) {}
+    return false;
   };
 
   const logout = () => {
@@ -22,7 +48,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, login: handleLogin, register: handleRegister, logout }}>
       {children}
     </AuthContext.Provider>
   );
