@@ -1,20 +1,28 @@
 // src/pages/Chatbot.jsx
 import React, { useState } from 'react';
+import { useAuth } from '../components/AuthContext';
+import { sendChatMessage } from '../api/chatbot';
 
 export default function Chatbot() {
+  const { token } = useAuth();
   const [messages, setMessages] = useState([
     { sender: 'bot', text: 'Hello! How can I help you today?' }
   ]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const sendMessage = (e) => {
+  const sendMessage = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
     setMessages([...messages, { sender: 'user', text: input }]);
-    // Here you would call your backend chatbot API and add the bot's response
-    setTimeout(() => {
-      setMessages(msgs => [...msgs, { sender: 'bot', text: 'This is a sample response.' }]);
-    }, 500);
+    setLoading(true);
+    try {
+      const res = await sendChatMessage(token, input);
+      setMessages(msgs => [...msgs, { sender: 'bot', text: res.reply || 'No response.' }]);
+    } catch {
+      setMessages(msgs => [...msgs, { sender: 'bot', text: 'Sorry, there was an error.' }]);
+    }
+    setLoading(false);
     setInput('');
   };
 
@@ -27,10 +35,11 @@ export default function Chatbot() {
             <b>{msg.sender}:</b> {msg.text}
           </div>
         ))}
+        {loading && <div><i>Bot is typing...</i></div>}
       </div>
       <form onSubmit={sendMessage}>
-        <input value={input} onChange={e => setInput(e.target.value)} placeholder="Type your message..." />
-        <button type="submit">Send</button>
+        <input value={input} onChange={e => setInput(e.target.value)} placeholder="Type your message..." disabled={loading} />
+        <button type="submit" disabled={loading}>Send</button>
       </form>
     </div>
   );

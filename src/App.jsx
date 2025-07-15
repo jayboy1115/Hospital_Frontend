@@ -1,16 +1,17 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './components/AuthProvider';
+import { AuthProvider, useAuth } from './components/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Appointments from './pages/Appointments';
 import Profile from './pages/Profile';
 import Chatbot from './pages/Chatbot';
-import './App.css';
+
+import Dashboard from './pages/Dashboard';
 
 function PrivateRoute({ children }) {
-  const { token } = useAuth();
-  return token ? children : <Navigate to="/login" />;
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" />;
 }
 
 function App() {
@@ -20,6 +21,11 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/" element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          } />
           <Route path="/appointments" element={
             <PrivateRoute>
               <Appointments />
@@ -35,7 +41,7 @@ function App() {
               <Chatbot />
             </PrivateRoute>
           } />
-          <Route path="*" element={<Navigate to="/appointments" />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </AuthProvider>
